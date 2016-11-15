@@ -8,7 +8,7 @@ The User API is beeing built in Python, using the Flask framework.
 Some people recommended to work with Python on a virtual environment.
 This protects the SO's Python and m
 
-TODO describe environment's creation
+- [ ] TODO describe environment's creation
 
 ## Running the API
 
@@ -17,25 +17,27 @@ We recommend you to use Docker because you can do this in a isolated configurati
 
 ### Running in Docker
 
+- [ ] TODO fix this steps
+
 comando para criar o container com base no Dockerfile:
-docker build -t pessoa-srv .
+docker build -t user-srv .
 
 comando para executar o container e iniciar o serviço automaticamente
-docker run --name pessoa-serv -v /home/lucasm/workspace/works-experiment/microservices/pessoa:/app-src -p 7070:8000 srv-pessoa
+docker run --name user-serv -v .:/app-src -p 7070:8000 srv-user
 
-para utilizar o serviço, é só acessar o endereço http://localhost:7070/enterprise
-
+para utilizar o serviço, é só acessar o endereço http://localhost:7070/users
 
 para debugar o funcionamento do serviço no container
-docker run --name pessoa-serv --entrypoint=/bin/ash -it -v /home/lucasm/workspace/works-experiment/microservices/pessoa:/app-src -p 7070:8000 srv-pessoa
+docker run --name user-serv --entrypoint=/bin/ash -it -v .:/app-src -p 7070:8000 srv-user
 
 ### Running in the console
 
-TODO fix this example
+- [ ] TODO fix this example
 
+```shell
 cd ../env-python/organizacional
-
 source ../teste_env/bin/activate
+```
 
 ## About the project's name
 
