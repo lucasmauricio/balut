@@ -50,6 +50,12 @@ celerybeat-schedule
 venv/
 ENV/
 
+# IDEs file
+.spyproject/
+
+# database file
+*.db
+
 # project's sub-repositories
 app/
 api/
