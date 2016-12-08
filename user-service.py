@@ -6,6 +6,7 @@ import socket
 import os
 import sqlite3
 import logging
+import sys
 
 __all__ = ['make_json_app']
 
@@ -21,20 +22,20 @@ host_port = 0
 def pessoas_api(user_data=None):
     if request.method == "GET":
 
-        app.logger.info('chamada get: {}'.format(user_data))
+        logging.info('chamada get: {}'.format(user_data))
         statement = '''SELECT name, email, phone FROM users'''
         return jsonify(executa_statement_retrieve_db(statement))
 
     elif request.method == "POST":
 
         user_data = request.json
-        app.logger.info('chamada POST: {}'.format(user_data))
+        #logging.info('chamada POST: {}'.format(user_data))
         if request.json:
-            app.logger.debug("chegou um JSON")
+            logging.info("chegou um JSON no POST: {}".format(user_data))
             return create_user(user_data)
             #return "Thanks. Your age is %s" % mydata.get("name")
         else:
-            app.logger.debug("nem sinal do JSON")
+            logging.info("nem sinal do JSON")
             return "no json received"
 
 
@@ -61,13 +62,13 @@ def pessoas_api(user_data=None):
 @app.route("/user/<int:user_id>", methods = ['GET', 'PUT', 'DELETE'])
 def department_api(user_id=None):
     if request.method == "GET":
-        app.logger.info('get request for id="{}"'.format(user_id))
+        logging.info('get request for id="{}"'.format(user_id))
         if user_id:
             # retrieve one specific user
             statement = '''SELECT name, email, phone FROM users where id = {}'''.format(user_id)
-            app.logger.debug('SQL={}'.format(statement))
+            logging.debug('SQL={}'.format(statement))
             user = executa_statement_retrieve_db(statement)
-            app.logger.debug('user found for de id {}: {}'.format(user_id, user))
+            logging.debug('user found for de id {}: {}'.format(user_id, user))
             if user:
                 return jsonify(user)
             else:
@@ -92,7 +93,7 @@ def department_api(user_id=None):
 def test_db():
     query = 'PRAGMA database_list'
     test = executa_statement_retrieve_db(query)
-    app.logger.info('test results: {}'.format(test))
+    logging.info('test results: {}'.format(test))
 
 
 
@@ -103,7 +104,7 @@ def initialize_db():
                            phone TEXT, email TEXT unique, password TEXT)
     '''
     executa_statement_change_db(cria_tabelas, None)
-    app.logger.info('table created/verified successfully')
+    logging.info('table created/verified successfully')
 
 
 
@@ -135,54 +136,70 @@ def executa_statement_retrieve_db(statement):
 def create_user(new_user):
 
     #FIXME the application must define the id value. So, it mut not be accepted in the user's request
-    columns = ', '.join(new_user.keys())
-    placeholders = ', '.join('?' * len(new_user))
-    sql = 'INSERT INTO users ({}) VALUES ({})'.format(columns, placeholders)
-    app.logger.info(sql)
+    #columns = ', '.join(new_user.keys())
+    #placeholders = ', '.join('?' * len(new_user))
+    #sql = 'INSERT INTO users ({}) VALUES ({})'.format(columns, placeholders)
+    sql = 'INSERT INTO users VALUES %s'
+    #logging.info(sql)
     #insert_pessoa = 'insert into users(id, name, phone, email, password) values (?,?,?,?,?)',
-    #app.logger.info(insert_pessoa)
-    app.logger.info(new_user)
+    #logging.info(insert_pessoa)
+    #logging.info(new_user)
     #executa_statement_change_db(insert_pessoa, new_user)
     #resultado = executa_statement_change_db(sql, new_user.values())
-    resultado = executa_statement_change_db(sql)
+    #resultado = executa_statement_change_db(sql)
+
+    db = sqlite3.connect(DATABASE_FILE)
+    cursor = db.cursor()
+    resultado = cursor.execute(sql, new_user)
+    db.commit()
+    db.close()
+
+
     return resultado
 
 
 
 #registrando API do serviço
 def api_register(api_id, api_data):
-    app.logger.info("registrando o serviço '{}'".format(api_id))
+    logging.info("registrando o serviço '{}'".format(api_id))
 
     REGISTRADOR_API = 'http://registrator:8080/asset/'
     headers = {'Content-Type': 'application/json'}
-    r = requests.put(REGISTRADOR_API+api_id, headers=headers, json=api_data)
-    if r.status_code == 201:
-        app.logger.info(" -registrado com sucesso: {}".format(r.status_code))
-    else:
-        app.logger.info(" -ocorreu erro no registro do serviço: {}".format(r.status_code))
-        app.logger.info(" ->resposta do registrador: " + r.text)
-
+    try:
+        r = requests.put(REGISTRADOR_API+api_id, headers=headers, json=api_data)
+        if r.status_code == 201:
+            logging.info(" -registrado com sucesso: {}".format(r.status_code))
+        else:
+            logging.info(" -ocorreu erro no registro do serviço: {}".format(r.status_code))
+            logging.info(" ->resposta do registrador: " + r.text)
+            sys.exit(1)
+    except requests.exceptions.ConnectionError as ce:
+        # http://dev.mobify.com/blog/http-requests-are-hard/
+        logging.error("These aren't the domains we're looking for. '%s'." % REGISTRADOR_API)
+        logging.debug(ce)
+        sys.exit(1)
+ 
 
 def run_server(port):
-    app.logger.info("")
-    app.logger.info("")
-    app.logger.info("initializing the app and its 2 services")
+    logging.info("")
+    logging.info("")
+    logging.info("initializing the app and its 2 services")
 #    print "the server's address is " + app.config['SERVER_NAME']
-    app.logger.info(app.config.get('SERVER_NAME'))
-    app.logger.info(app.config.get('PORT'))
+    logging.info(app.config.get('SERVER_NAME'))
+    logging.info(app.config.get('PORT'))
 
     #registering service users_api
     enterprise_api_id = 'users'
     #TODO automatizar a forma de recuperar o endereço do serviço
     payload = {'name':'Enterprise data', "address": "http://{}:{}/users".format('localhost', port)}
-    app.logger.info(payload)
+    logging.info(payload)
     api_register(enterprise_api_id, payload);
 
     #registering service user_api
     departments_api_id = 'user'
     #TODO automatizar a forma de recuperar o endereço do serviço
     payload = {'name':'Departments data', "address": "http://{}:{}/user/{}user_id{}".format('localhost', port, '{','}')}
-    app.logger.info(payload)
+    logging.info(payload)
     api_register(departments_api_id, payload);
 
     app.run(host= '0.0.0.0', port=port, debug=True, use_reloader=True)
@@ -192,17 +209,17 @@ def run_server(port):
 #https://github.com/benoitc/gunicorn/issues/379
 @app.before_first_request
 def setup_logging():
-    if not app.debug:
     # In production mode, add log handler to sys.stderr.
-        app.logger.addHandler(logging.StreamHandler())
-        app.logger.setLevel(logging.INFO)
+    logging.basicConfig(level=logging.DEBUG,
+                        format='%(asctime)s [%(levelname)-5s]: %(message)s',
+                        )
 
 
 
 if __name__ == '__main__':
 
     setup_logging()
-    app.logger.info('initializing the app {}...'.format(app))
+    logging.info('initializing the app {}...'.format(app))
 
     initialize_db()
     test_db()
@@ -212,7 +229,7 @@ if __name__ == '__main__':
     #TODO trocar ou não pelo endereço de rede da máquina??
     #sock.bind(('localhost', 0))
     #host_address, host_port = sock.getsockname()
-    app.logger.info("==> a porta escolhida foi {}".format(host_port))
+    logging.info("==> a porta escolhida foi {}".format(host_port))
     #print "==> e meu IP {}".format(host_address)
     sock.close()
 
