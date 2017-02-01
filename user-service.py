@@ -178,7 +178,7 @@ def api_register(api_id, api_data):
         logging.error("These aren't the domains we're looking for. '%s'." % REGISTRADOR_API)
         logging.debug(ce)
         sys.exit(1)
- 
+
 
 def run_server(port):
     logging.info("")
@@ -191,14 +191,14 @@ def run_server(port):
     #registering service users_api
     enterprise_api_id = 'users'
     #TODO automatizar a forma de recuperar o endereço do serviço
-    payload = {'name':'Enterprise data', "address": "http://{}:{}/users".format('localhost', port)}
+    payload = {'name':'Users data', "address": "http://{}:{}/users".format('localhost', port)}
     logging.info(payload)
     api_register(enterprise_api_id, payload);
 
     #registering service user_api
     departments_api_id = 'user'
     #TODO automatizar a forma de recuperar o endereço do serviço
-    payload = {'name':'Departments data', "address": "http://{}:{}/user/{}user_id{}".format('localhost', port, '{','}')}
+    payload = {'name':'User data', "address": "http://{}:{}/user/{}user_id{}".format('localhost', port, '{','}')}
     logging.info(payload)
     api_register(departments_api_id, payload);
 
@@ -224,7 +224,7 @@ if __name__ == '__main__':
     initialize_db()
     test_db()
 
-    host_port = int(os.environ.get('PORT', 8000))
+    host_port = int(os.environ.get('PORT', 7070))
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     #TODO trocar ou não pelo endereço de rede da máquina??
     #sock.bind(('localhost', 0))
